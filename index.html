@@ -20,6 +20,7 @@
       }
 
       #button {
+        margin-top: 15px;
         display: inline-block;
         padding: 5px 20px;
         background-color: #007bff;
@@ -43,7 +44,12 @@
   </head>
   <body>
     <button id="button">Mulai</button>
-    <input type="text" id="resultBox" readonly />
+    <input
+      type="text"
+      id="resultBox"
+      readonly
+      style="overflow: scroll; text-overflow: ellipsis"
+    />
   </body>
 </html>
 
