@@ -1,77 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teachable Machine Image Model</title>
-  </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>535200045 - Shoe Model Detection</title>
 
-  <body>
-    <div>Teachable Machine Image Model - p5.js and ml5.js</div>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #333;
+            color: #fff;
+            padding: 20px 0;
+        }
+
+        p {
+            font-size: 20px;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>535200045 - Shoe Model Detection</h1>
+    <p>Deteksi Nama Model Sepatu</p>
+
     <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
     <script type="text/javascript">
-      // Classifier Variable
+
       let classifier;
-      // Model URL
-      let imageModelURL = "./model/";
+        let imageModelURL = "./model/";
+        let video;
+        let flippedVideo;
+        let label = "Loading...";
 
-      // Video
-      let video;
-      let flippedVideo;
-      // To store the classification
-      let label = "";
-
-      // Load the model first
-      function preload() {
-        classifier = ml5.imageClassifier(imageModelURL + "model.json");
-      }
-
-      function setup() {
-        createCanvas(320, 260);
-        // Create the video
-        video = createCapture(VIDEO);
-        video.size(320, 240);
-        video.hide();
-
-        flippedVideo = ml5.flipImage(video);
-        // Start classifying
-        classifyVideo();
-      }
-
-      function draw() {
-        background(0);
-        // Draw the video
-        image(flippedVideo, 0, 0);
-
-        // Draw the label
-        fill(255);
-        textSize(16);
-        textAlign(CENTER);
-        text(label, width / 2, height - 4);
-      }
-
-      // Get a prediction for the current video frame
-      function classifyVideo() {
-        flippedVideo = ml5.flipImage(video);
-        classifier.classify(flippedVideo, gotResult);
-        flippedVideo.remove();
-      }
-
-      // When we get a result
-      function gotResult(error, results) {
-        // If there is an error
-        if (error) {
-          console.error(error);
-          return;
+        function preload() {
+            classifier = ml5.imageClassifier(imageModelURL + "model.json");
         }
-        // The results are in an array ordered by confidence.
-        console.log(results[0]);
-        label = results[0].label;
-        // Classifiy again!
-        classifyVideo();
-      }
+
+        function setup() {
+            createCanvas(320, 260);
+            video = createCapture(VIDEO);
+            video.size(320, 240);
+            video.hide();
+
+            flippedVideo = ml5.flipImage(video);
+            classifyVideo();
+        }
+
+        function draw() {
+            background(0);
+            image(flippedVideo, 0, 0);
+
+            fill(255);
+            textSize(16);
+            textAlign(CENTER);
+            text(label, width / 2, height - 4);
+        }
+
+        function classifyVideo() {
+            flippedVideo = ml5.flipImage(video);
+            classifier.classify(flippedVideo, gotResult);
+            flippedVideo.remove();
+        }
+
+        function gotResult(error, results) {
+            label = results[0].label;
+            classifyVideo();
+        }
     </script>
-  </body>
+</body>
 </html>
