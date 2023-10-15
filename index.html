@@ -71,9 +71,7 @@
   let imageModelURL = "./model/";
   let video;
   let flippedVideo;
-
   let cameraActive = false;
-  let frontCameraActive = false;
 
   function preload() {
     classifier = ml5.imageClassifier(imageModelURL + "model.json");
@@ -81,10 +79,32 @@
 
   function setup() {
     createCanvas(320, 260);
-    video = createCapture({ video: { facingMode: frontCameraActive ? 'user' : 'environment' }, audio: false });
-    video.size(320, 260);
-    video.hide();
-    flippedVideo = ml5.flipImage(video);
+    initializeCamera("environment");
+  }
+
+  function initializeCamera(facingMode) {
+    const constraints = {
+      audio: false,
+      video: {
+        facingMode: facingMode,
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    };
+
+    navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then(function (stream) {
+        video = createCapture({ audio: false, video: constraints });
+        video.size(320, 260);
+        video.hide();
+        flippedVideo = ml5.flipImage(video);
+        cameraActive = true;
+        classifyVideo();
+      })
+      .catch(function (error) {
+        console.error("Error accessing the camera:", error);
+      });
   }
 
   function draw() {
@@ -94,33 +114,39 @@
     }
   }
 
-  function switchCamera() {
-    frontCameraActive = !frontCameraActive;
-    video.remove();
-    setup();
-    if (cameraActive) {
-      classifyVideo();
-    }
-  }
-
   function classifyVideo() {
     flippedVideo = ml5.flipImage(video);
     classifier.classify(flippedVideo, gotResult);
     flippedVideo.remove();
   }
 
+  function gotResult(error, results) {
+    label = results[0].label;
+    if (cameraActive) {
+      classifyVideo();
+    }
+    document.getElementById("resultBox").value = label;
+  }
+
   const startButton = document.getElementById("button");
   startButton.addEventListener("click", function () {
     if (!cameraActive) {
-      video.play();
-      cameraActive = true;
-      classifyVideo();
+      initializeCamera("environment");
     }
   });
 
-  const switchCameraButton = document.getElementById("switchCameraButton");
-  switchCameraButton.addEventListener("click", function () {
-    switchCamera();
-  });
+  const switchCameraButton = document.createElement("button");
+  switchCameraButton.textContent = "Switch Camera";
+  switchCameraButton.onclick = function () {
+    if (cameraActive) {
+      video.stop();
+      cameraActive = false;
+    }
+    const facingMode = video.getVideoTracks()[0].getSettings().facingMode;
+    const newFacingMode = facingMode === "environment" ? "user" : "environment";
+    initializeCamera(newFacingMode);
+  };
+
+  document.body.appendChild(switchCameraButton);
 </script>
 </html>
