@@ -1,7 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- ... (CSS and meta tags) ... -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>535200045</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
+
+      canvas {
+        display: block;
+        margin: 0 auto;
+      }
+
+      #button {
+        margin-top: 15px;
+        display: inline-block;
+        padding: 5px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        border-radius: 5px;
+      }
+
+      #resultBox {
+        display: block;
+        margin: 20px auto;
+        width: 300px;
+        height: 40px;
+        font-size: 18px;
+        text-align: center;
+        border-radius: 5px;
+      }
+    </style>
   </head>
   <body>
     <button id="button">Mulai</button>
@@ -11,7 +50,6 @@
       readonly
       style="overflow: auto; text-overflow: ellipsis"
     />
-    <button id="switchCameraButton">Switch Camera</button>
   </body>
 
   <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
@@ -23,7 +61,7 @@
     let video;
     let flippedVideo;
     let cameraActive = false;
-    let frontCameraActive = false; // Default to rear camera
+    let frontCameraActive = false;
 
     function preload() {
       classifier = ml5.imageClassifier(imageModelURL + "model.json");
@@ -33,13 +71,15 @@
       createCanvas(320, 260);
       toggleCamera();
       video.hide();
-      flippedVideo = ml5.flipImage(video);
     }
 
     function draw() {
       background(0);
       if (cameraActive) {
-        image(flippedVideo, 0, 0);
+        push();
+        scale(-1, 1);
+        image(flippedVideo, -width, 0, width, height);
+        pop();
       }
     }
 
@@ -64,7 +104,10 @@
       if (frontCameraActive) {
         video = createCapture(VIDEO);
       } else {
-        video = createCapture({ audio: false, video: { facingMode: "environment" } });
+        video = createCapture({
+          audio: false,
+          video: { facingMode: "environment" },
+        });
       }
       video.size(320, 260);
       video.hide();
@@ -78,12 +121,6 @@
         cameraActive = true;
         classifyVideo();
       }
-    });
-
-    const switchCameraButton = document.getElementById("switchCameraButton");
-    switchCameraButton.addEventListener("click", function () {
-      frontCameraActive = !frontCameraActive;
-      toggleCamera();
     });
   </script>
 </html>
