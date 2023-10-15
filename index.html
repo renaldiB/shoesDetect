@@ -50,6 +50,7 @@
       readonly
       style="overflow: auto; text-overflow: ellipsis"
     />
+    <canvas id="canvas"></canvas>
   </body>
 </html>
 
@@ -70,7 +71,7 @@
 
   function setup() {
     createCanvas(320, 260);
-    video = createCapture(VIDEO);
+    video = createCapture(VIDEO, { facingMode: "environment" });
     video.size(320, 260);
     video.hide();
     flippedVideo = ml5.flipImage(video);
