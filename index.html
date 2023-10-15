@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>535200045-1</title>
-    <title>535200045</title>
 
     <style>
       body {
@@ -72,10 +71,6 @@
 
   function setup() {
     createCanvas(320, 260);
-    video = createCapture(VIDEO, { facingMode: "environment" });
-    video.size(320, 260);
-    video.hide();
-    flippedVideo = ml5.flipImage(video);
   }
 
   function draw() {
@@ -102,7 +97,9 @@
   const startButton = document.getElementById("button");
   startButton.addEventListener("click", function () {
     if (!cameraActive) {
-      video.play();
+      video = createCapture(VIDEO, { facingMode: "environment" });
+      video.size(320, 260);
+      video.hide();
       cameraActive = true;
       classifyVideo();
     }
