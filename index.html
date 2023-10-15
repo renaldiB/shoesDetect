@@ -1,76 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Switch</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>535200045</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
 
-        video {
-            display: block;
-            margin: 0 auto;
-        }
+      canvas {
+        display: block;
+        margin: 0 auto;
+      }
 
-        #button {
-            margin-top: 15px;
-            display: inline-block;
-            padding: 5px 20px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            border-radius: 5px;
-        }
+      #button {
+        margin-top: 15px;
+        display: inline-block;
+        padding: 5px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        border-radius: 5px;
+      }
+
+      #resultBox {
+        display: block;
+        margin: 20px auto;
+        width: 300px;
+        height: 40px;
+        font-size: 18px;
+        text-align: center;
+        border-radius: 5px;
+      }
     </style>
-</head>
-<body>
-    <video id="video" width="320" height="240" autoplay playsinline muted></video>
-    <button id="button">Switch Camera</button>
-</body>
+  </head>
+  <body>
+    <button id="button">Mulai</button>
+    <input
+      type="text"
+      id="resultBox"
+      readonly
+      style="overflow: auto; text-overflow: ellipsis"
+    />
+  </body>
 </html>
 
-<script>
-    let video;
-    let cameraActive = false;
-    let currentCamera = 'user';
+<script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
+<script type="text/javascript">
+  let classifier;
+  let imageModelURL = "./model/";
+  let video;
+  let flippedVideo;
+  let cameraActive = false;
+  let frontCamera = true; // Initially, use the front camera
 
-    async function setupCamera() {
-        const constraints = {
-            video: { facingMode: currentCamera },
-            audio: false
-        };
+  function preload() {
+    classifier = ml5.imageClassifier(imageModelURL + "model.json");
+  }
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject = stream;
-        } catch (error) {
-            console.error('Error accessing the camera:', error);
-        }
+  function setup() {
+    createCanvas(320, 260);
+    if (frontCamera) {
+      video = createCapture(VIDEO);
+    } else {
+      // To switch to the rear camera
+      video = createCapture({ video: { facingMode: "environment" } });
     }
+    video.size(320, 260);
+    video.hide();
+    flippedVideo = ml5.flipImage(video);
+  }
 
-    function toggleCamera() {
-        if (currentCamera === 'user') {
-            currentCamera = 'environment';
-        } else {
-            currentCamera = 'user';
-        }
-
-        // Stop the current stream and switch to the new camera
-        video.srcObject.getTracks().forEach(track => track.stop());
-        setupCamera();
+  function draw() {
+    background(0);
+    if (cameraActive) {
+      image(flippedVideo, 0, 0);
     }
+  }
 
-    document.getElementById('button').addEventListener('click', toggleCamera);
+  function classifyVideo() {
+    flippedVideo = ml5.flipImage(video);
+    classifier.classify(flippedVideo, gotResult);
+    flippedVideo.remove();
+  }
 
-    video = document.getElementById('video');
-    setupCamera();
+  function gotResult(error, results) {
+    label = results[0].label;
+    if (cameraActive) {
+      classifyVideo();
+    }
+    document.getElementById("resultBox").value = label;
+  }
+
+  const startButton = document.getElementById("button");
+  startButton.addEventListener("click", function () {
+    if (!cameraActive) {
+      video.play();
+      cameraActive = true;
+      classifyVideo();
+    }
+  });
 </script>
