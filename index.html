@@ -56,7 +56,7 @@
   </head>
   <body>
     <button id="button">Mulai</button>
-    <button id="switchCamera">Switch Camera</button>
+    <button id="switchCameraButton">Switch Camera</button>
     <input
       type="text"
       id="resultBox"
@@ -64,77 +64,63 @@
       style="overflow: auto; text-overflow: ellipsis"
     />
   </body>
-  <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
-  <script type="text/javascript">
-    let classifier;
-    let imageModelURL = "./model/";
-    let video;
-    let flippedVideo;
+</html>
 
-    let cameraActive = false;
-    let frontCamera = false; // A flag to track the currently active camera
+<script type="text/javascript">
+  let classifier;
+  let imageModelURL = "./model/";
+  let video;
+  let flippedVideo;
 
-    // Function to toggle between front and rear cameras
-    function toggleCamera() {
-      frontCamera = !frontCamera;
-      const constraints = {
-        video: {
-          facingMode: frontCamera ? "user" : "environment",
-        },
-      };
-      video.remove(); // Remove the existing video element
-      video = createCapture(constraints);
-      video.size(320, 260);
-      video.hide();
-      flippedVideo = ml5.flipImage(video);
+  let cameraActive = false;
+  let frontCameraActive = false;
+
+  function preload() {
+    classifier = ml5.imageClassifier(imageModelURL + "model.json");
+  }
+
+  function setup() {
+    createCanvas(320, 260);
+    video = createCapture({ video: { facingMode: frontCameraActive ? 'user' : 'environment' }, audio: false });
+    video.size(320, 260);
+    video.hide();
+    flippedVideo = ml5.flipImage(video);
+  }
+
+  function draw() {
+    background(0);
+    if (cameraActive) {
+      image(flippedVideo, 0, 0);
     }
+  }
 
-    function preload() {
-      classifier = ml5.imageClassifier(imageModelURL + "model.json");
+  function switchCamera() {
+    frontCameraActive = !frontCameraActive;
+    video.remove();
+    setup();
+    if (cameraActive) {
+      classifyVideo();
     }
+  }
 
-    function setup() {
-      createCanvas(320, 260);
-      video = createCapture(VIDEO);
-      video.size(320, 260);
-      video.hide();
-      flippedVideo = ml5.flipImage(video);
+  function classifyVideo() {
+    flippedVideo = ml5.flipImage(video);
+    classifier.classify(flippedVideo, gotResult);
+    flippedVideo.remove();
+  }
+
+  const startButton = document.getElementById("button");
+  startButton.addEventListener("click", function () {
+    if (!cameraActive) {
+      video.play();
+      cameraActive = true;
+      classifyVideo();
     }
+  });
 
-    function draw() {
-      background(0);
-      if (cameraActive) {
-        image(flippedVideo, 0, 0);
-      }
-    }
-
-    function classifyVideo() {
-      flippedVideo = ml5.flipImage(video);
-      classifier.classify(flippedVideo, gotResult);
-      flippedVideo.remove();
-    }
-
-    function gotResult(error, results) {
-      label = results[0].label;
-      if (cameraActive) {
-        classifyVideo();
-      }
-      document.getElementById("resultBox").value = label;
-    }
-
-    const startButton = document.getElementById("button");
-    const switchCameraButton = document.getElementById("switchCamera");
-
-    startButton.addEventListener("click", function () {
-      if (!cameraActive) {
-        video.play();
-        cameraActive = true;
-        classifyVideo();
-      }
-    });
-
-    switchCameraButton.addEventListener("click", toggleCamera);
-  </script>
+  const switchCameraButton = document.getElementById("switchCameraButton");
+  switchCameraButton.addEventListener("click", function () {
+    switchCamera();
+  });
+</script>
 </html>
