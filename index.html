@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>535200045</title>
+    <title>535200045-Fix 1</title>
 
     <style>
       body {
@@ -40,37 +40,28 @@
         text-align: center;
         border-radius: 5px;
       }
-
-      #switchCamera {
-        margin-top: 15px;
-        display: inline-block;
-        padding: 5px 20px;
-        background-color: #4CAF50;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-        font-size: 18px;
-        border-radius: 5px;
-      }
     </style>
   </head>
   <body>
     <button id="button">Mulai</button>
-    <button id="switchCameraButton">Switch Camera</button>
     <input
       type="text"
       id="resultBox"
       readonly
       style="overflow: auto; text-overflow: ellipsis"
-    />
+    </input>
+    <button id="switchCameraButton">Switch Camera</button>
   </body>
 </html>
-
+<script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
 <script type="text/javascript">
   let classifier;
   let imageModelURL = "./model/";
   let video;
   let flippedVideo;
+
   let cameraActive = false;
 
   function preload() {
@@ -79,32 +70,10 @@
 
   function setup() {
     createCanvas(320, 260);
-    initializeCamera("environment");
-  }
-
-  function initializeCamera(facingMode) {
-    const constraints = {
-      audio: false,
-      video: {
-        facingMode: facingMode,
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    };
-
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then(function (stream) {
-        video = createCapture({ audio: false, video: constraints });
-        video.size(320, 260);
-        video.hide();
-        flippedVideo = ml5.flipImage(video);
-        cameraActive = true;
-        classifyVideo();
-      })
-      .catch(function (error) {
-        console.error("Error accessing the camera:", error);
-      });
+    video = createCapture(VIDEO);
+    video.size(320, 260);
+    video.hide();
+    flippedVideo = ml5.flipImage(video);
   }
 
   function draw() {
@@ -131,22 +100,27 @@
   const startButton = document.getElementById("button");
   startButton.addEventListener("click", function () {
     if (!cameraActive) {
-      initializeCamera("environment");
+      video.play();
+      cameraActive = true;
+      classifyVideo();
     }
+  }
+
+  const switchCameraButton = document.getElementById("switchCameraButton");
+  let frontCameraActive = true;
+
+  switchCameraButton.addEventListener("click", function () {
+    video.stop();
+    frontCameraActive = !frontCameraActive;
+
+    if (frontCameraActive) {
+      video = createCapture(VIDEO);
+    } else {
+      video = createCapture({ audio: false, video: { facingMode: "environment" } });
+    }
+    video.size(320, 260);
+    video.hide();
+
+    classifyVideo();
   });
-
-  const switchCameraButton = document.createElement("button");
-  switchCameraButton.textContent = "Switch Camera";
-  switchCameraButton.onclick = function () {
-    if (cameraActive) {
-      video.stop();
-      cameraActive = false;
-    }
-    const facingMode = video.getVideoTracks()[0].getSettings().facingMode;
-    const newFacingMode = facingMode === "environment" ? "user" : "environment";
-    initializeCamera(newFacingMode);
-  };
-
-  document.body.appendChild(switchCameraButton);
 </script>
-</html>
