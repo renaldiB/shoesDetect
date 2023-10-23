@@ -14,12 +14,7 @@
         padding: 0;
       }
 
-      canvas {
-        display: block;
-        margin: 0 auto;
-      }
-
-      #button {
+      #btn {
         margin-top: 15px;
         display: inline-block;
         padding: 5px 20px;
@@ -42,8 +37,9 @@
       }
     </style>
   </head>
+
   <body>
-    <button id="button">Mulai</button>
+    <button id="btn">Mulai</button>
     <input
       type="text"
       id="resultBox"
@@ -53,74 +49,73 @@
   </body>
 
   <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
-  <script type="text/javascript">
-    let classifier;
-    let imageModelURL = "./model/";
-    let video;
-    let flippedVideo;
-    let cameraActive = false;
-    let frontCameraActive = false;
+    <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
+    <script type="text/javascript">
+      let model;
+      let video;
+      let flippedVideo;
+      let camera = false;
+      let frontCamera = false;
 
-    function preload() {
-      classifier = ml5.imageClassifier(imageModelURL + "model.json");
-    }
-
-    function setup() {
-      createCanvas(320, 260);
-      toggleCamera();
-      video.hide();
-    }
-
-    function draw() {
-      background(0);
-      if (cameraActive) {
-        push();
-        scale(-1, 1);
-        image(flippedVideo, -width, 0, width, height);
-        pop();
+      function preload() {
+        model = ml5.imageClassifier("./model/model.json");
       }
-    }
 
-    function classifyVideo() {
-      flippedVideo = ml5.flipImage(video);
-      classifier.classify(flippedVideo, gotResult);
-      flippedVideo.remove();
-    }
+      function setup() {
+        createCanvas(320, 260);
+        screen();
+        video.hide();
+      }
 
-    function gotResult(error, results) {
-      label = results[0].label;
-      if (cameraActive) {
-        classifyVideo();
+      function draw() {
+        background(0);
+        if (camera) {
+          push();
+          scale(-1, 1);
+          image(flippedVideo, -width, 0, width, height);
+          pop();
+        }
       }
-      document.getElementById("resultBox").value = label;
-    }
 
-    function toggleCamera() {
-      if (video) {
-        video.stop();
+      function startClassify() {
+        flippedVideo = ml5.flipImage(video);
+        model.classify(flippedVideo, result);
+        flippedVideo.remove();
       }
-      if (frontCameraActive) {
-        video = createCapture(VIDEO);
-      } else {
-        video = createCapture({
-          audio: false,
-          video: { facingMode: "environment" },
-        });
-      }
-      video.size(320, 260);
-      video.hide();
-      classifyVideo();
-    }
 
-    const startButton = document.getElementById("button");
-    startButton.addEventListener("click", function () {
-      if (!cameraActive) {
-        video.play();
-        cameraActive = true;
-        classifyVideo();
+      function result(error, results) {
+        label = results[0].label;
+        if (camera) {
+          startClassify();
+        }
+        document.getElementById("resultBox").value = label;
       }
-    });
-  </script>
+
+      function screen() {
+        if (video) {
+          video.stop();
+        }
+        if (frontCamera) {
+          video = createCapture(VIDEO);
+        } else {
+          video = createCapture({
+            audio: false,
+            video: { facingMode: "environment" },
+          });
+        }
+        video.size(320, 260);
+        video.hide();
+        startClassify();
+      }
+
+      const startButton = document.getElementById("btn");
+      startButton.addEventListener("click", function () {
+        if (!camera) {
+          video.play();
+          camera = true;
+          startClassify();
+        }
+      });
+    </script>
 </html>
