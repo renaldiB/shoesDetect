@@ -14,8 +14,18 @@
         padding: 0;
       }
 
+      .result-box {
+        display: block;
+        margin: 20px auto;
+        width: 300px;
+        height: 40px;
+        font-size: 18px;
+        text-align: center;
+        border-radius: 5px;
+      }
+
       #btn {
-        margin-top: 15px;
+        margin: 15px;
         display: inline-block;
         padding: 5px 20px;
         background-color: #007bff;
@@ -25,97 +35,112 @@
         font-size: 18px;
         border-radius: 5px;
       }
-
-      #resultBox {
-        display: block;
-        margin: 20px auto;
-        width: 300px;
-        height: 40px;
-        font-size: 18px;
-        text-align: center;
-        border-radius: 5px;
-      }
     </style>
   </head>
 
   <body>
+    <input type="text" id="resultBox-1" readonly class="result-box" />
+    <input type="text" id="resultBox-2" readonly class="result-box" />
+    <input type="text" id="resultBox-3" readonly class="result-box" />
     <button id="btn">Mulai</button>
-    <input
-      type="text"
-      id="resultBox"
-      readonly
-      style="overflow: auto; text-overflow: ellipsis"
-    />
   </body>
 
   <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
-    <script type="text/javascript">
-      let model;
-      let video;
-      let flippedVideo;
-      let camera = false;
-      let frontCamera = false;
+  <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
+  <script type="text/javascript">
+    let model;
+    let video;
+    let flippedVideo;
+    let camera = false;
 
-      function preload() {
-        model = ml5.imageClassifier("./model/model.json");
+    function preload() {
+      model = ml5.imageClassifier("./model/model.json");
+    }
+
+    function setup() {
+      createCanvas(320, 260);
+      screen();
+      video.hide();
+    }
+
+    function draw() {
+      background(0);
+      if (camera) {
+        push();
+        scale(-1, 1);
+        image(flippedVideo, -width, 0, width, height);
+        pop();
       }
+    }
 
-      function setup() {
-        createCanvas(320, 260);
-        screen();
-        video.hide();
-      }
+    function startClassify() {
+      flippedVideo = ml5.flipImage(video);
+      model.classify(flippedVideo, result);
+      flippedVideo.remove();
+    }
 
-      function draw() {
-        background(0);
-        if (camera) {
-          push();
-          scale(-1, 1);
-          image(flippedVideo, -width, 0, width, height);
-          pop();
+    function result(error, results) {
+      const labels = results
+        .slice(0, 3)
+        .map(
+          (result) => `${result.label} (${parseInt(result.confidence * 100)}%)`
+        );
+
+      if (camera) {
+        for (let i = 0; i < 3; i++) {
+          document.getElementById(`resultBox-${i + 1}`).value = labels[i];
         }
-      }
 
-      function startClassify() {
-        flippedVideo = ml5.flipImage(video);
-        model.classify(flippedVideo, result);
-        flippedVideo.remove();
-      }
-
-      function result(error, results) {
-        label = results[0].label;
-        if (camera) {
-          startClassify();
-        }
-        document.getElementById("resultBox").value = label;
-      }
-
-      function screen() {
-        if (video) {
-          video.stop();
-        }
-        if (frontCamera) {
-          video = createCapture(VIDEO);
-        } else {
-          video = createCapture({
-            audio: false,
-            video: { facingMode: "environment" },
-          });
-        }
-        video.size(320, 260);
-        video.hide();
         startClassify();
       }
+    }
 
-      const startButton = document.getElementById("btn");
-      startButton.addEventListener("click", function () {
-        if (!camera) {
-          video.play();
-          camera = true;
-          startClassify();
-        }
+    function screen() {
+      if (video) {
+        video.stop();
+      }
+      video = createCapture({
+        audio: false,
+        video: { facingMode: "environment" },
       });
-    </script>
+      video.size(320, 260);
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(function (stream) {
+            video.srcObject = stream;
+            video.play();
+            startClassify();
+            camera = true;
+          })
+          .catch(function (error) {
+            console.error("Error access camera:", error);
+          });
+      }
+    }
+
+    const startButton = document.getElementById("btn");
+    startButton.addEventListener("click", function () {
+      if (!camera) {
+        grabAndProcessImage();
+      }
+    });
+
+    function grabAndProcessImage() {
+      const snapshot = video.get();
+      const resizedSnapshot = createImage(224, 224);
+      resizedSnapshot.copy(
+        snapshot,
+        0,
+        0,
+        snapshot.width,
+        snapshot.height,
+        0,
+        0,
+        resizedSnapshot.width,
+        resizedSnapshot.height
+      );
+    }
+  </script>
 </html>
